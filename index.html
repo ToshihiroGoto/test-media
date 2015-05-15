@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>media_test</title>
+
+  <style>
+    body, div, video, canvas{
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-spacing: none;
+      box-sizing: border-box;
+    }
+
+    body{
+      width: 100%;
+      height: 100%;
+      background-image: url("./images/bg.png");
+
+      -webkit-animation-name: moveBG_wk;
+        -webkit-animation-duration: 5s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: linear;
+
+      animation-name: moveBG;
+        animation-duration: 5s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+
+    }
+
+    @-webkit-keyframes moveBG_wk{
+      100%{
+        background-position: 128px -128px;
+      }
+    }
+
+    @keyframes moveBG{
+      100%{
+        background-position: 128px -128px;
+      }
+    }
+
+    #wrap{
+      width: 688px;
+      height: 274px;
+      padding: 16px;
+      position: absolute;
+      top: calc(50% - 137px);
+      left: calc(50% - 344px);
+      background-color: white;
+
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    }
+
+    #videoTag{
+      margin-right: 16px;
+      background-color: white;
+      display: block;
+      float:left;
+
+      background-image: url("./images/cam.png");
+    }
+
+    #canvasTag{
+      background-color: white;
+      display: block;
+
+      background-image: url("./images/pic.png");
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+      <video id="videoTag" src="" autoplay muted width="320" height="240"  poster="./images/cam.png"></video>
+      <canvas id="canvasTag" width="320" height="240"></canvas>
+  </div>
+  <a href="" id="dl-text"></a>
+
+  <script>
+
+    var mediaStream;
+
+    var writeError = function(string) {
+      alert('ERROR: ' + string);
+    };
+
+    var initializeVideoStream = function(stream) {
+        mediaStream = stream;
+
+        var video = document.getElementById('videoTag');
+        if (typeof (video.srcObject) !== 'undefined') {
+             video.srcObject = mediaStream;
+        }
+        else {
+            video.src = URL.createObjectURL(mediaStream);
+        }
+    };
+
+    var capture = function() {
+        if (!mediaStream) {
+          return;
+        }
+
+        var video = document.getElementById('videoTag');
+        var canvas = document.getElementById('canvasTag');
+        canvas.removeEventListener('click', savePhoto);
+        
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, 320, 240);
+        canvas.addEventListener('click', savePhoto);
+    };
+
+    var savePhoto = function() {
+        var canvas = document.getElementById('canvasTag');
+        if (navigator.msSaveBlob) {
+            var imgData = canvas.msToBlob('image/jpeg');
+            navigator.msSaveBlob(imgData, 'myPhoto.jpg');
+        }
+        else {
+            var imgData = canvas.toDataURL('image/jpeg');
+            var link = document.getElementById('dl-text');
+            link.href = imgData;
+            link.download = 'myPhoto.jpg';
+            link.click();
+        }
+        canvas.removeEventListener('click', savePhoto);
+    }; 
+
+    var getUserMediaError = function(e) {
+        if (e.name.indexOf('NotFoundError') >= 0) {
+          writeError('Webcam not found.');
+        }
+        else {
+          writeError(e.name + " --- カメラが動作していないか、他で使われていますよー");
+        }
+    };
+
+    var init = function() {
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+        document.getElementById('videoTag').addEventListener('click', capture, false);
+
+        if (navigator.getUserMedia) {
+          navigator.getUserMedia({ video: true }, initializeVideoStream, getUserMediaError);
+          document.getElementById('videoTag').addEventListener('click', capture, false);
+        }
+        else {
+          writeError('Media Capture API がサポートされていないよー');
+        }
+    };
+
+    init();
+  </script>
+</body>
+</html>
