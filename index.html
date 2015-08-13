@@ -88,7 +88,7 @@
 
     var initializeVideoStream = function(stream) {
         mediaStream = stream;
-
+        
         var video = document.getElementById('videoTag');
         if (typeof (video.srcObject) !== 'undefined') {
              video.srcObject = mediaStream;
@@ -96,6 +96,8 @@
         else {
             video.src = URL.createObjectURL(mediaStream);
         }
+
+        if (video.paused) video.play();
     };
 
     var capture = function() {
